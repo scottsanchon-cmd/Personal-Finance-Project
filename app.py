@@ -267,28 +267,55 @@ with hero_left:
                     '</div></div>', unsafe_allow_html=True)
 
 with hero_right:
-    st.markdown("<br>", unsafe_allow_html=True)
     if "profile_img" not in st.session_state:
         st.session_state.profile_img = None
-    hero_img = st.file_uploader("Profile photo", type=["png","jpg","jpeg","webp"],
-                                  key="hero_upload", label_visibility="collapsed")
+    hero_img = st.file_uploader("Update photo", type=["png","jpg","jpeg","webp"],
+                                  key="hero_upload", label_visibility="visible")
     if hero_img:
-        img_bytes = hero_img.read()
-        st.session_state.profile_img = base64.b64encode(img_bytes).decode()
+        st.session_state.profile_img = base64.b64encode(hero_img.read()).decode()
 
     if st.session_state.profile_img:
-        ext = "jpeg"
-        st.markdown(f'''<div style="text-align:center;margin-top:.5rem">
-            <img src="data:image/{ext};base64,{st.session_state.profile_img}"
-                 class="hero-avatar" alt="Profile"/>
-            <p style="font-size:.7rem;color:#666;margin:.4rem 0 0">Scotty</p>
+        st.markdown(f'''<div style="text-align:center;margin:.2rem 0 .8rem">
+            <img src="data:image/jpeg;base64,{st.session_state.profile_img}"
+                 style="width:130px;height:130px;border-radius:50%;object-fit:cover;
+                 border:4px solid rgba(124,111,255,0.7);display:block;margin:0 auto;
+                 box-shadow:0 0 28px rgba(124,111,255,0.45),0 0 60px rgba(124,111,255,0.15)"/>
+            <p style="font-size:.9rem;font-weight:600;color:#c3a6ff;margin:.5rem 0 .1rem;letter-spacing:.1em">SCOTTY</p>
+            <p style="font-size:.68rem;color:#555;margin:0">Budget Manager</p>
         </div>''', unsafe_allow_html=True)
     else:
-        st.markdown('''<div style="text-align:center;margin-top:.5rem">
-            <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#2a2a4a,#1a1a30);
-                 border:3px solid rgba(124,111,255,0.3);display:flex;align-items:center;
-                 justify-content:center;font-size:2rem;margin:0 auto">🧑</div>
-            <p style="font-size:.7rem;color:#555;margin:.4rem 0 0">Upload photo</p>
+        st.markdown('''<div style="text-align:center;margin:.2rem 0 .8rem">
+            <div style="width:130px;height:130px;border-radius:50%;
+                 background:linear-gradient(135deg,#2a2a4a,#1a1a30);
+                 border:4px solid rgba(124,111,255,0.35);display:flex;align-items:center;
+                 justify-content:center;font-size:3.5rem;margin:0 auto;
+                 box-shadow:0 0 24px rgba(124,111,255,0.18)">🧑</div>
+            <p style="font-size:.72rem;color:#555;margin:.5rem 0 0">Upload photo above</p>
+        </div>''', unsafe_allow_html=True)
+
+    # ── QR code for phone access ──────────────────────────────
+    APP_URL = "https://personal-finance-project-os7dijsxubb3fy9jea42wr.streamlit.app"
+    try:
+        import qrcode as _qrc, io as _io
+        _q = _qrc.QRCode(version=1, box_size=5, border=2,
+              error_correction=_qrc.constants.ERROR_CORRECT_L)
+        _q.add_data(APP_URL)
+        _q.make(fit=True)
+        _qi = _q.make_image(fill_color="#c3a6ff", back_color="#0d0d15")
+        _buf = _io.BytesIO()
+        _qi.save(_buf, format="PNG")
+        _qb64 = base64.b64encode(_buf.getvalue()).decode()
+        st.markdown(f'''<div class="qr-box">
+            <p style="font-size:.62rem;color:#666;text-transform:uppercase;
+               letter-spacing:.1em;margin:0 0 .5rem">Scan to open on phone</p>
+            <img src="data:image/png;base64,{_qb64}"
+                 style="width:120px;height:120px;border-radius:10px;
+                 border:1px solid #2a2a3a;display:block;margin:0 auto"/>
+            <p style="font-size:.58rem;color:#444;margin:.4rem 0 0;word-break:break-all">personal-finance-project<br>os7dijsxubb3fy9jea42wr.streamlit.app</p>
+        </div>''', unsafe_allow_html=True)
+    except Exception as e:
+        st.markdown(f'''<div class="qr-box">
+            <p style="font-size:.65rem;color:#ff6b6b;margin:0">QR error: {e}</p>
         </div>''', unsafe_allow_html=True)
 
 # ── No data guard ─────────────────────────────────────────────────────────────
