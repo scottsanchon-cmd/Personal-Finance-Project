@@ -49,14 +49,16 @@ div[data-testid="stSidebar"]{background:#0d0d15;border-right:1px solid #1e1e2e;}
 .hero::after{content:"";position:absolute;bottom:-40px;left:30%;width:200px;height:200px;background:radial-gradient(circle,rgba(59,158,255,0.1) 0%,transparent 70%);}
 .hero-logo{font-size:2.6rem;font-weight:700;background:linear-gradient(135deg,#ffffff 0%,#c3a6ff 50%,#3b9eff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em;margin:0;}
 .hero-sub{font-size:.95rem;color:#8888aa;margin:.3rem 0 0;font-weight:300;letter-spacing:.02em;}
-.hero-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(124,111,255,0.5);box-shadow:0 0 20px rgba(124,111,255,0.3);}
-.hero-avatar-placeholder{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#2a2a4a,#1a1a30);border:3px solid rgba(124,111,255,0.3);display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.hero-avatar{width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid rgba(124,111,255,0.7);box-shadow:0 0 30px rgba(124,111,255,0.4),0 0 60px rgba(124,111,255,0.15);}
+.hero-avatar-placeholder{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,#2a2a4a,#1a1a30);border:4px solid rgba(124,111,255,0.4);display:flex;align-items:center;justify-content:center;font-size:3rem;}
 .hero-stats{display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap;}
 .hero-stat{text-align:center;}
 .hero-stat .hs-val{font-size:1.4rem;font-weight:600;font-family:"DM Mono",monospace;color:#fff;}
 .hero-stat .hs-lbl{font-size:.68rem;color:#666;text-transform:uppercase;letter-spacing:.1em;}
 .upload-zone{border:2px dashed #3a3a5a;border-radius:16px;padding:2rem;text-align:center;cursor:pointer;transition:all .3s;background:rgba(124,111,255,0.03);}
 .upload-zone:hover{border-color:#7c6fff;background:rgba(124,111,255,0.07);}
+.qr-box{background:#1a1a24;border:1px solid #2a2a3a;border-radius:16px;padding:1rem;text-align:center;margin-top:.8rem;}
+.bsugg{background:#0e1a2e;border:1px solid #1e3a5a;border-radius:12px;padding:.9rem 1.1rem;margin:.3rem 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
 </style>
 """, unsafe_allow_html=True)
 
