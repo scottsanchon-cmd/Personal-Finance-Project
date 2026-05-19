@@ -69,24 +69,30 @@ DEFAULT_BUDGETS = {
 }
 
 # ── Supabase helpers ──────────────────────────────────────────────────────────
-def get_sb():
-    url = st.secrets.get("SUPABASE_URL","")
-    key = st.secrets.get("SUPABASE_KEY","")
-    if not url or not key:
-        return None
+def get_sb_creds():
+    """Return (url, key) or (None, None)."""
     try:
-        from supabase import create_client
-        return create_client(url, key)
+        url = st.secrets.get("SUPABASE_URL", "")
+        key = st.secrets.get("SUPABASE_KEY", "")
+        if url and key:
+            return url.rstrip("/"), key
     except Exception:
-        return None
+        pass
+    return None, None
 
 def load_db():
-    sb = get_sb()
-    if not sb: return None
+    import urllib.request, urllib.error
+    url, key = get_sb_creds()
+    if not url: return None
     try:
-        res = sb.table("transactions").select("*").execute()
-        if res.data:
-            df = pd.DataFrame(res.data)
+        endpoint = f"{url}/rest/v1/transactions?select=*&limit=5000"
+        req = urllib.request.Request(endpoint, headers={
+            "apikey": key, "Authorization": f"Bearer {key}",
+        })
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode())
+        if data:
+            df = pd.DataFrame(data)
             df["date"] = pd.to_datetime(df["date"])
             return df
     except Exception:
@@ -94,17 +100,44 @@ def load_db():
     return None
 
 def save_db(df):
-    sb = get_sb()
-    if not sb: return False
+    import urllib.request, urllib.error
+    url, key = get_sb_creds()
+    if not url: return False
     try:
-        sb.table("transactions").delete().neq("id",0).execute()
+        # Delete all existing rows
+        del_req = urllib.request.Request(
+            f"{url}/rest/v1/transactions?id=gte.0",
+            method="DELETE",
+            headers={"apikey": key, "Authorization": f"Bearer {key}",
+                     "Content-Type": "application/json"},
+        )
+        try: urllib.request.urlopen(del_req, timeout=10)
+        except: pass
+
+        # Insert new rows in batches of 100
         rec = df.copy()
         rec["date"] = rec["date"].astype(str)
-        for c in ["id","created_at"]:
+        for c in ["id", "created_at"]:
             if c in rec.columns: rec = rec.drop(columns=[c])
-        sb.table("transactions").insert(rec.to_dict(orient="records")).execute()
+        records = rec.to_dict(orient="records")
+        # Replace NaN with None for JSON
+        import math
+        clean = [{k: (None if (isinstance(v, float) and math.isnan(v)) else v)
+                  for k, v in row.items()} for row in records]
+
+        for i in range(0, len(clean), 100):
+            batch = clean[i:i+100]
+            body  = json.dumps(batch).encode()
+            ins   = urllib.request.Request(
+                f"{url}/rest/v1/transactions",
+                data=body, method="POST",
+                headers={"apikey": key, "Authorization": f"Bearer {key}",
+                         "Content-Type": "application/json", "Prefer": "return=minimal"},
+            )
+            urllib.request.urlopen(ins, timeout=15)
         return True
     except Exception as e:
+        st.sidebar.warning(f"DB error: {e}")
         return False
 
 # ── Session init ──────────────────────────────────────────────────────────────
@@ -165,9 +198,12 @@ with st.sidebar:
         st.markdown(f"📅 {df['date'].min().strftime('%b %d')} – {df['date'].max().strftime('%b %d, %Y')}")
         if st.button("🗑️ Clear all data", use_container_width=True):
             st.session_state.df = None; st.session_state.messages = []
-            sb = get_sb()
-            if sb:
-                try: sb.table("transactions").delete().neq("id",0).execute()
+            import urllib.request as _ur
+            _u, _k = get_sb_creds()
+            if _u:
+                try:
+                    _r = _ur.Request(f"{_u}/rest/v1/transactions?id=gte.0", method="DELETE", headers={"apikey":_k,"Authorization":f"Bearer {_k}","Content-Type":"application/json"})
+                    _ur.urlopen(_r, timeout=10)
                 except: pass
             st.rerun()
 
@@ -473,3 +509,4 @@ Be specific, concise, reference actual numbers. Use bullets. Flag budget overrun
     if st.session_state.messages:
         if st.button("🗑️ Clear chat"):
             st.session_state.messages=[]; st.rerun()
+
