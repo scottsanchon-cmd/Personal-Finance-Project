@@ -14,7 +14,7 @@ from anthropic import Anthropic
 from parser import parse_statement
 from categorizer import tag_dataframe
 
-st.set_page_config(page_title="Finance Manager", page_icon="💰",
+st.set_page_config(page_title="Scotty Budget Management", page_icon="💎",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -44,6 +44,19 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif;}
                  padding:.55rem 1.4rem;font-family:'DM Sans',sans-serif;font-weight:500;}
 .stButton>button:hover{background:#9b8fff;transform:translateY(-1px);}
 div[data-testid="stSidebar"]{background:#0d0d15;border-right:1px solid #1e1e2e;}
+.hero{background:linear-gradient(135deg,#0d0d20 0%,#1a1040 50%,#0d1a30 100%);border-radius:24px;padding:2.5rem 2rem;margin-bottom:1.5rem;position:relative;overflow:hidden;border:1px solid #2a2a4a;}
+.hero::before{content:"";position:absolute;top:-60px;right:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(124,111,255,0.15) 0%,transparent 70%);}
+.hero::after{content:"";position:absolute;bottom:-40px;left:30%;width:200px;height:200px;background:radial-gradient(circle,rgba(59,158,255,0.1) 0%,transparent 70%);}
+.hero-logo{font-size:2.6rem;font-weight:700;background:linear-gradient(135deg,#ffffff 0%,#c3a6ff 50%,#3b9eff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em;margin:0;}
+.hero-sub{font-size:.95rem;color:#8888aa;margin:.3rem 0 0;font-weight:300;letter-spacing:.02em;}
+.hero-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(124,111,255,0.5);box-shadow:0 0 20px rgba(124,111,255,0.3);}
+.hero-avatar-placeholder{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#2a2a4a,#1a1a30);border:3px solid rgba(124,111,255,0.3);display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.hero-stats{display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap;}
+.hero-stat{text-align:center;}
+.hero-stat .hs-val{font-size:1.4rem;font-weight:600;font-family:"DM Mono",monospace;color:#fff;}
+.hero-stat .hs-lbl{font-size:.68rem;color:#666;text-transform:uppercase;letter-spacing:.1em;}
+.upload-zone{border:2px dashed #3a3a5a;border-radius:16px;padding:2rem;text-align:center;cursor:pointer;transition:all .3s;background:rgba(124,111,255,0.03);}
+.upload-zone:hover{border-color:#7c6fff;background:rgba(124,111,255,0.07);}
 </style>
 """, unsafe_allow_html=True)
 
@@ -145,7 +158,7 @@ if not st.session_state.db_loaded:
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 💰 Finance Manager")
+    st.markdown("💎 Scotty Budget")
     st.markdown("---")
     api_in = st.text_input("Anthropic API Key", value=st.session_state.api_key,
                             type="password", placeholder="sk-ant-...")
@@ -208,9 +221,76 @@ with st.sidebar:
             value=st.session_state.budgets.get(cat,DEFAULT_BUDGETS[cat]),
             step=50, key=f"bgt_{cat}")
 
+# ── Hero section (always visible at top) ─────────────────────────────────────
+import base64
+
+df_for_hero = st.session_state.df
+cur_for_hero = df_for_hero["currency"].iloc[0] if df_for_hero is not None else "CAD"
+spent_for_hero = abs(df_for_hero[df_for_hero["amount"]<0]["amount"].sum()) if df_for_hero is not None else 0
+txn_for_hero   = len(df_for_hero[df_for_hero["amount"]<0]) if df_for_hero is not None else 0
+latest_income  = 0
+if df_for_hero is not None:
+    lm_str = df_for_hero["date"].max().replace(day=1).strftime("%Y-%m")
+    latest_income = st.session_state.income_by_month.get(lm_str, 0)
+savings_for_hero = latest_income - spent_for_hero if latest_income else None
+
+hero_left, hero_right = st.columns([3,1])
+with hero_left:
+    st.markdown('''<div class="hero">
+        <div style="position:relative;z-index:1">
+            <p class="hero-logo">💎 Scotty Budget Management</p>
+            <p class="hero-sub">Personal finance · powered by Claude AI</p>
+        </div>''', unsafe_allow_html=True)
+
+    if df_for_hero is not None:
+        sv_html = ""
+        if savings_for_hero is not None:
+            sv_col = "#69db7c" if savings_for_hero >= 0 else "#ff6b6b"
+            sv_html = f'''<div class="hero-stat">
+                <div class="hs-val" style="color:{sv_col}">{cur_for_hero} {savings_for_hero:,.0f}</div>
+                <div class="hs-lbl">Saved</div></div>'''
+        st.markdown(f'''<div style="position:relative;z-index:1">
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hs-val" style="color:#ff6b6b">{cur_for_hero} {spent_for_hero:,.2f}</div>
+                    <div class="hs-lbl">Total Spent</div></div>
+                <div class="hero-stat">
+                    <div class="hs-val">{txn_for_hero}</div>
+                    <div class="hs-lbl">Transactions</div></div>
+                {sv_html}
+            </div></div></div>''', unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="position:relative;z-index:1"><br>'
+                    '<p style="color:#666;font-size:.9rem">Upload a statement to get started →</p>'
+                    '</div></div>', unsafe_allow_html=True)
+
+with hero_right:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if "profile_img" not in st.session_state:
+        st.session_state.profile_img = None
+    hero_img = st.file_uploader("Profile photo", type=["png","jpg","jpeg","webp"],
+                                  key="hero_upload", label_visibility="collapsed")
+    if hero_img:
+        img_bytes = hero_img.read()
+        st.session_state.profile_img = base64.b64encode(img_bytes).decode()
+
+    if st.session_state.profile_img:
+        ext = "jpeg"
+        st.markdown(f'''<div style="text-align:center;margin-top:.5rem">
+            <img src="data:image/{ext};base64,{st.session_state.profile_img}"
+                 class="hero-avatar" alt="Profile"/>
+            <p style="font-size:.7rem;color:#666;margin:.4rem 0 0">Scotty</p>
+        </div>''', unsafe_allow_html=True)
+    else:
+        st.markdown('''<div style="text-align:center;margin-top:.5rem">
+            <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#2a2a4a,#1a1a30);
+                 border:3px solid rgba(124,111,255,0.3);display:flex;align-items:center;
+                 justify-content:center;font-size:2rem;margin:0 auto">🧑</div>
+            <p style="font-size:.7rem;color:#555;margin:.4rem 0 0">Upload photo</p>
+        </div>''', unsafe_allow_html=True)
+
 # ── No data guard ─────────────────────────────────────────────────────────────
 if st.session_state.df is None:
-    st.markdown("# 💰 Personal Finance Manager")
     st.info("👈 Upload a bank statement in the sidebar to get started.")
     st.stop()
 
