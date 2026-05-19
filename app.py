@@ -14,36 +14,530 @@ from anthropic import Anthropic
 from parser import parse_statement
 from categorizer import tag_dataframe
 
-st.set_page_config(page_title="Finance Manager", page_icon="💰",
+st.set_page_config(page_title="Scotty Budget Management", page_icon="💰",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-html,body,[class*="css"]{font-family:'DM Sans',sans-serif;}
-.mc{background:#1a1a24;border:1px solid #2a2a3a;border-radius:16px;padding:1.4rem;text-align:center;}
-.mc .lb{font-size:.72rem;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem;}
-.mc .vl{font-size:1.7rem;font-weight:600;font-family:'DM Mono',monospace;}
-.mc .sb{font-size:.72rem;color:#666;margin-top:.25rem;}
-.sh{font-size:.7rem;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.12em;
-    margin:2rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid #2a2a3a;}
-.bw{background:#1a1a24;border:1px solid #2a2a3a;border-radius:12px;padding:1rem 1.2rem;margin:.4rem 0;}
-.br{display:flex;justify-content:space-between;font-size:.85rem;color:#ccc;margin-bottom:.4rem;}
-.tr{background:#2a2a3a;border-radius:6px;height:8px;overflow:hidden;}
-.fl{height:8px;border-radius:6px;}
-.ai-b{background:#1a1a24;border:1px solid #2a2a3a;border-left:3px solid #7c6fff;
-      border-radius:12px;padding:1.1rem 1.4rem;margin:.6rem 0;font-size:.93rem;line-height:1.75;color:#d0d0e0;}
-.usr-b{background:#16202e;border:1px solid #1e3048;border-left:3px solid #3b9eff;
-       border-radius:12px;padding:.9rem 1.4rem;margin:.6rem 0;font-size:.93rem;color:#b0c8e8;}
-.sv{background:#0e1f14;border:1px solid #1a3a24;border-radius:14px;padding:1.2rem;margin:.4rem 0;}
-.sv .am{font-size:1.4rem;font-weight:600;color:#69db7c;font-family:'DM Mono',monospace;}
-.rc{background:#1a1a24;border:1px solid #2a2a3a;border-radius:10px;
-    padding:.75rem 1rem;margin:.3rem 0;display:flex;justify-content:space-between;align-items:center;}
-.income-box{background:#0e1520;border:2px solid #1e3a50;border-radius:16px;padding:1.5rem;margin:1rem 0;}
-.stButton>button{background:#7c6fff;color:#fff;border:none;border-radius:10px;
-                 padding:.55rem 1.4rem;font-family:'DM Sans',sans-serif;font-weight:500;}
-.stButton>button:hover{background:#9b8fff;transform:translateY(-1px);}
-div[data-testid="stSidebar"]{background:#0d0d15;border-right:1px solid #1e1e2e;}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+/* ──────────────────────────────────────────────────────────
+
+   GLOBAL
+
+────────────────────────────────────────────────────────── */
+
+html, body, [class*="css"]{
+
+    font-family:'DM Sans',sans-serif;
+
+    background:#0b0b12;
+
+    color:#e6e6f0;
+
+}
+
+/* Hide Streamlit top spacing */
+
+.block-container{
+
+    padding-top:1.5rem;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   TOP HEADER / BRANDING
+
+────────────────────────────────────────────────────────── */
+
+.top-brand{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    background:linear-gradient(135deg,#121826,#1b1b2d);
+
+    border:1px solid #2a2a3a;
+
+    border-radius:24px;
+
+    padding:1.5rem 1.8rem;
+
+    margin-bottom:1.4rem;
+
+    box-shadow:0 12px 35px rgba(0,0,0,.25);
+
+}
+
+.brand-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:1rem;
+
+}
+
+.brand-logo{
+
+    width:64px;
+
+    height:64px;
+
+    border-radius:20px;
+
+    background:linear-gradient(135deg,#7c6fff,#3b9eff);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:1.8rem;
+
+    box-shadow:0 10px 25px rgba(124,111,255,.25);
+
+}
+
+.brand-title{
+
+    font-size:2rem;
+
+    font-weight:700;
+
+    color:#ffffff;
+
+    line-height:1.1;
+
+}
+
+.brand-sub{
+
+    color:#8f9bb3;
+
+    font-size:.95rem;
+
+    margin-top:.35rem;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   HERO IMAGE UPLOAD
+
+────────────────────────────────────────────────────────── */
+
+.hero-upload{
+
+    background:#12121c;
+
+    border:1px dashed #3b9eff;
+
+    border-radius:20px;
+
+    padding:1.2rem;
+
+    margin-bottom:1.5rem;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   METRIC CARDS
+
+────────────────────────────────────────────────────────── */
+
+.mc{
+
+    background:#1a1a24;
+
+    border:1px solid #2a2a3a;
+
+    border-radius:18px;
+
+    padding:1.4rem;
+
+    text-align:center;
+
+    transition:all .2s ease;
+
+}
+
+.mc:hover{
+
+    transform:translateY(-3px);
+
+    border-color:#3b3b50;
+
+}
+
+.mc .lb{
+
+    font-size:.72rem;
+
+    color:#888;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+    margin-bottom:.3rem;
+
+}
+
+.mc .vl{
+
+    font-size:1.7rem;
+
+    font-weight:600;
+
+    font-family:'DM Mono',monospace;
+
+}
+
+.mc .sb{
+
+    font-size:.72rem;
+
+    color:#666;
+
+    margin-top:.25rem;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   SECTION HEADERS
+
+────────────────────────────────────────────────────────── */
+
+.sh{
+
+    font-size:.72rem;
+
+    font-weight:700;
+
+    color:#666;
+
+    text-transform:uppercase;
+
+    letter-spacing:.12em;
+
+    margin:2rem 0 1rem;
+
+    padding-bottom:.5rem;
+
+    border-bottom:1px solid #2a2a3a;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   BUDGET CARDS
+
+────────────────────────────────────────────────────────── */
+
+.bw{
+
+    background:#1a1a24;
+
+    border:1px solid #2a2a3a;
+
+    border-radius:14px;
+
+    padding:1rem 1.2rem;
+
+    margin:.5rem 0;
+
+}
+
+.br{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    font-size:.85rem;
+
+    color:#ccc;
+
+    margin-bottom:.45rem;
+
+}
+
+.tr{
+
+    background:#2a2a3a;
+
+    border-radius:6px;
+
+    height:8px;
+
+    overflow:hidden;
+
+}
+
+.fl{
+
+    height:8px;
+
+    border-radius:6px;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   CHAT BUBBLES
+
+────────────────────────────────────────────────────────── */
+
+.ai-b{
+
+    background:#1a1a24;
+
+    border:1px solid #2a2a3a;
+
+    border-left:3px solid #7c6fff;
+
+    border-radius:14px;
+
+    padding:1.1rem 1.4rem;
+
+    margin:.7rem 0;
+
+    font-size:.93rem;
+
+    line-height:1.75;
+
+    color:#d0d0e0;
+
+}
+
+.usr-b{
+
+    background:#16202e;
+
+    border:1px solid #1e3048;
+
+    border-left:3px solid #3b9eff;
+
+    border-radius:14px;
+
+    padding:.95rem 1.4rem;
+
+    margin:.7rem 0;
+
+    font-size:.93rem;
+
+    color:#b0c8e8;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   SAVINGS CARDS
+
+────────────────────────────────────────────────────────── */
+
+.sv{
+
+    background:#0e1f14;
+
+    border:1px solid #1a3a24;
+
+    border-radius:16px;
+
+    padding:1.2rem;
+
+    margin:.4rem 0;
+
+}
+
+.sv .am{
+
+    font-size:1.4rem;
+
+    font-weight:600;
+
+    color:#69db7c;
+
+    font-family:'DM Mono',monospace;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   RECURRING CHARGES
+
+────────────────────────────────────────────────────────── */
+
+.rc{
+
+    background:#1a1a24;
+
+    border:1px solid #2a2a3a;
+
+    border-radius:12px;
+
+    padding:.8rem 1rem;
+
+    margin:.4rem 0;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   INCOME BOX
+
+────────────────────────────────────────────────────────── */
+
+.income-box{
+
+    background:#0e1520;
+
+    border:2px solid #1e3a50;
+
+    border-radius:18px;
+
+    padding:1.5rem;
+
+    margin:1rem 0;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   BUTTONS
+
+────────────────────────────────────────────────────────── */
+
+.stButton > button{
+
+    background:linear-gradient(135deg,#7c6fff,#5a7dff);
+
+    color:#fff;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:.6rem 1.4rem;
+
+    font-family:'DM Sans',sans-serif;
+
+    font-weight:600;
+
+    transition:all .2s ease;
+
+}
+
+.stButton > button:hover{
+
+    transform:translateY(-2px);
+
+    background:linear-gradient(135deg,#9b8fff,#7094ff);
+
+    box-shadow:0 8px 20px rgba(124,111,255,.25);
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   SIDEBAR
+
+────────────────────────────────────────────────────────── */
+
+div[data-testid="stSidebar"]{
+
+    background:#0d0d15;
+
+    border-right:1px solid #1e1e2e;
+
+}
+
+div[data-testid="stSidebar"] *{
+
+    color:#d8d8e5;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   INPUTS
+
+────────────────────────────────────────────────────────── */
+
+.stTextInput input,
+
+.stNumberInput input,
+
+.stSelectbox div[data-baseweb="select"]{
+
+    background:#161622 !important;
+
+    border:1px solid #2a2a3a !important;
+
+    border-radius:10px !important;
+
+    color:#fff !important;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   TABS
+
+────────────────────────────────────────────────────────── */
+
+button[data-baseweb="tab"]{
+
+    background:#14141d;
+
+    border-radius:10px;
+
+    color:#aaa;
+
+    margin-right:.3rem;
+
+    padding:.55rem 1rem;
+
+}
+
+button[data-baseweb="tab"][aria-selected="true"]{
+
+    background:#7c6fff !important;
+
+    color:#fff !important;
+
+}
+
+/* ──────────────────────────────────────────────────────────
+
+   DATAFRAMES
+
+────────────────────────────────────────────────────────── */
+
+[data-testid="stDataFrame"]{
+
+    border:1px solid #2a2a3a;
+
+    border-radius:14px;
+
+    overflow:hidden;
+
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -210,56 +704,220 @@ with st.sidebar:
 
 # ── No data guard ─────────────────────────────────────────────────────────────
 if st.session_state.df is None:
-    st.markdown("# 💰 Personal Finance Manager")
-    st.info("👈 Upload a bank statement in the sidebar to get started.")
+    st.markdown("""
+
+    <div class="top-brand">
+
+        <div class="brand-left">
+
+            <div class="brand-logo">💰</div>
+
+            <div>
+
+                <div class="brand-title">Scotty Budget Management</div>
+
+                <div class="brand-sub">Upload a bank statement to begin tracking your money beautifully.</div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+
+    <div class="income-box">
+
+        <h3 style="color:#3b9eff;margin:0 0 .5rem">👈 Get Started</h3>
+
+        <p style="color:#888;font-size:.95rem;margin:0">
+
+            Upload your bank statement from the sidebar to view your dashboard,
+
+            spending insights, budgets, savings tracker, and AI finance assistant.
+
+        </p>
+
+    </div>
+
+    """, unsafe_allow_html=True)
+
     st.stop()
 
 df  = st.session_state.df
+
 cur = df["currency"].iloc[0]
+
 bgt = st.session_state.budgets
 
+# ── Top Header / Branding ─────────────────────────────────────────────────────
+
+st.markdown("""
+
+<div class="top-brand">
+
+    <div class="brand-left">
+
+        <div class="brand-logo">💰</div>
+
+        <div>
+
+            <div class="brand-title">Scotty Budget Management</div>
+
+            <div class="brand-sub">Smart personal finance, budgeting, and savings tracking.</div>
+
+        </div>
+
+    </div>
+
+</div>
+
+""", unsafe_allow_html=True)
+
+# ── Dashboard Image Upload ────────────────────────────────────────────────────
+
+st.markdown("""
+
+<div class="hero-upload">
+
+    <div style="font-size:1rem;font-weight:600;color:#e6e6f0;margin-bottom:.25rem;">
+
+        🖼️ Dashboard Cover Image
+
+    </div>
+
+    <div style="font-size:.85rem;color:#8f9bb3;margin-bottom:.8rem;">
+
+        Upload a logo, banner, or personal finance image to customize your dashboard.
+
+    </div>
+
+</div>
+
+""", unsafe_allow_html=True)
+
+top_image = st.file_uploader(
+
+    "Upload dashboard image",
+
+    type=["png", "jpg", "jpeg"],
+
+    key="dashboard_image_upload",
+
+    label_visibility="collapsed"
+
+)
+
+if top_image:
+
+    st.image(top_image, use_container_width=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
 # ── Income prompt (pops up after upload) ──────────────────────────────────────
+
 latest_month     = df["date"].max().replace(day=1)
+
 latest_month_str = latest_month.strftime("%Y-%m")
+
 latest_month_lbl = latest_month.strftime("%B %Y")
 
 if st.session_state.show_income_prompt or \
+
    latest_month_str not in st.session_state.income_by_month:
+
     with st.container():
-        st.markdown(f"""<div class="income-box">
-            <h3 style="color:#3b9eff;margin:0 0 .5rem">💵 What was your income in {latest_month_lbl}?</h3>
+
+        st.markdown(f"""
+
+        <div class="income-box">
+
+            <h3 style="color:#3b9eff;margin:0 0 .5rem">
+
+                💵 What was your income in {latest_month_lbl}?
+
+            </h3>
+
             <p style="color:#888;font-size:.9rem;margin:0">
-            Enter your total take-home pay for this month. This lets the app suggest
-            smart budgets using the 50/30/20 rule and track your savings rate.</p>
-        </div>""", unsafe_allow_html=True)
+
+                Enter your total take-home pay for this month. This lets the app suggest
+
+                smart budgets using the 50/30/20 rule and track your savings rate.
+
+            </p>
+
+        </div>
+
+        """, unsafe_allow_html=True)
 
         ic1, ic2, ic3 = st.columns([2,1,1])
+
         with ic1:
+
             income_input = st.number_input(
+
                 f"Monthly take-home income ({cur})",
-                min_value=0.0, max_value=999999.0, value=0.0, step=100.0,
-                key="income_input_field")
+
+                min_value=0.0,
+
+                max_value=999999.0,
+
+                value=0.0,
+
+                step=100.0,
+
+                key="income_input_field"
+
+            )
+
         with ic2:
+
             st.markdown("<br>", unsafe_allow_html=True)
+
             if st.button("✅ Save income", use_container_width=True):
+
                 if income_input > 0:
+
                     st.session_state.income_by_month[latest_month_str] = income_input
+
                     save_income_db(latest_month_str, income_input)
-                    # Auto-suggest budgets using 50/30/20
+
                     needs  = income_input * 0.50
+
                     wants  = income_input * 0.30
-                    n_cats = len(NEEDS_CATS); w_cats = len(WANTS_CATS)
+
                     for cat in DEFAULT_BUDGETS:
+
                         if cat in NEEDS_CATS:
-                            st.session_state.budgets[cat] = round(needs/n_cats/50)*50
+
+                            st.session_state.budgets[cat] = round(
+
+                                needs / len(NEEDS_CATS) / 50
+
+                            ) * 50
+
                         elif cat in WANTS_CATS:
-                            st.session_state.budgets[cat] = round(wants/w_cats/50)*50
+
+                            st.session_state.budgets[cat] = round(
+
+                                wants / len(WANTS_CATS) / 50
+
+                            ) * 50
+
                     st.session_state.show_income_prompt = False
+
                     st.rerun()
+
         with ic3:
+
             st.markdown("<br>", unsafe_allow_html=True)
+
             if st.button("Skip for now", use_container_width=True):
+
                 st.session_state.show_income_prompt = False
+
                 st.rerun()
 
         st.markdown("---")
